@@ -19,8 +19,6 @@ A high-performance URL shortener service built with Go, featuring REST API endpo
 - [API Documentation](#api-documentation)
 - [Architecture](#architecture)
 - [Installation](#installation)
-- [Configuration](#configuration)
-- [Development](#development)
 - [Performance](#performance)
 
 ## Quick Start
@@ -167,7 +165,7 @@ curl -L http://localhost:8080/api/v1/voC
 └── migrations/                # Database migrations
 ```
 
-## 🔧 Installation
+## Installation
 
 ### From Source
 
@@ -214,11 +212,8 @@ go build -o url-shortener main.go
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔮 Future Enhancements
+## Future Enhancements
 
 - [ ] Custom short URL aliases
 - [ ] Bulk URL shortening
@@ -231,7 +226,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] User authentication
 - [ ] URL preview functionality
 
-## 📊 Tech Stack
+## Tech Stack
 
 - **Language**: Go 1.23.2
 - **Framework**: Gin HTTP framework
@@ -240,5 +235,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Architecture**: Clean Architecture pattern
 - **Encoding**: Base62 for short URLs
 
----
-# url-shortener
