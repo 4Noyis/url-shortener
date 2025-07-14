@@ -22,6 +22,10 @@ func NewURLService(repo *storage.URLRepository, bloomFilter *filter.BloomFilter)
 }
 
 func (s *URLService) ShortenURL(longURL string) (*models.URL, error) {
+	return s.ShortenURLWithTTL(longURL, nil)
+}
+
+func (s *URLService) ShortenURLWithTTL(longURL string, ttlSeconds *int) (*models.URL, error) {
 	if s.bloomFilter.Test(longURL) {
 		exists, err := s.repo.URLExists(longURL)
 		if err != nil {
@@ -40,7 +44,7 @@ func (s *URLService) ShortenURL(longURL string) (*models.URL, error) {
 	nextID := s.repo.GenerateNextID(lastID)
 	shortURL := encoding.EncodeIntToBase62(int64(nextID))
 
-	url, err := s.repo.CreateURL(shortURL, longURL)
+	url, err := s.repo.CreateURLWithTTL(shortURL, longURL, ttlSeconds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create URL: %w", err)
 	}
@@ -61,4 +65,12 @@ func (s *URLService) RedirectURL(shortURL string) (string, error) {
 	}
 
 	return url.LongURL, nil
+}
+
+func (s *URLService) CleanupExpiredURLs() (int, error) {
+	count, err := s.repo.DeleteExpiredURLs()
+	if err != nil {
+		return 0, fmt.Errorf("failed to cleanup expired URLs: %w", err)
+	}
+	return count, nil
 }

@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/4Noyis/url-shortener/config"
+	"github.com/4Noyis/url-shortener/internal/cleanup"
 	"github.com/4Noyis/url-shortener/internal/filter"
 	"github.com/4Noyis/url-shortener/internal/handlers"
 	"github.com/4Noyis/url-shortener/internal/server"
@@ -36,6 +38,10 @@ func main() {
 
 	urlService := service.NewURLService(urlRepo, bloomFilter)
 	urlHandler := handlers.NewURLHandler(urlService)
+
+	// Start cleanup scheduler (runs every hour)
+	cleanupScheduler := cleanup.NewScheduler(urlService, time.Hour)
+	go cleanupScheduler.Start()
 
 	router := server.SetupRoutes(urlHandler)
 	server.StartServer(router, "8080")

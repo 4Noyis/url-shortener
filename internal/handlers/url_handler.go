@@ -28,7 +28,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 		return
 	}
 
-	url, err := h.urlService.ShortenURL(req.LongURL)
+	url, err := h.urlService.ShortenURLWithTTL(req.LongURL, req.TTLSeconds)
 	if err != nil {
 		if err.Error() == "URL already exists" {
 			c.JSON(http.StatusConflict, dto.ErrorResponse{
@@ -49,6 +49,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 		ShortURL:  url.ShortURL,
 		LongURL:   url.LongURL,
 		CreatedAt: url.CreatedAt,
+		ExpiresAt: url.ExpiresAt,
 	}
 
 	c.JSON(http.StatusCreated, response)

@@ -139,3 +139,52 @@ func (r *URLRepository) IncrementClicks(shortURL string) error {
 	}
 	return nil
 }
+
+func (r *URLRepository) CreateURLWithTTL(shortURL, longURL string, ttlSeconds *int) (*models.URL, error) {
+	var expiresAt *time.Time
+	if ttlSeconds != nil {
+		expTime := time.Now().Add(time.Duration(*ttlSeconds) * time.Second)
+		expiresAt = &expTime
+	}
+
+	insertQuery := `INSERT INTO urls (short_url, long_url, expires_at) VALUES ($1, $2, $3) RETURNING id, created_at`
+
+	var insertedID int
+	var createdAt time.Time
+
+	err := r.db.QueryRow(context.Background(), insertQuery, shortURL, longURL, expiresAt).Scan(&insertedID, &createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert URL: %w", err)
+	}
+
+	return &models.URL{
+		ID:        insertedID,
+		ShortURL:  shortURL,
+		LongURL:   longURL,
+		CreatedAt: createdAt,
+		ExpiresAt: expiresAt,
+		Clicks:    0,
+		IsActive:  true,
+	}, nil
+}
+
+func (r *URLRepository) DeleteExpiredURLs() (int, error) {
+	query := "DELETE FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()"
+	result, err := r.db.Exec(context.Background(), query)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete expired URLs: %w", err)
+	}
+	
+	rowsAffected := result.RowsAffected()
+	return int(rowsAffected), nil
+}
+
+func (r *URLRepository) GetExpiredURLsCount() (int, error) {
+	query := "SELECT COUNT(*) FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()"
+	var count int
+	err := r.db.QueryRow(context.Background(), query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count expired URLs: %w", err)
+	}
+	return count, nil
+}
