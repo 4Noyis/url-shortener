@@ -14,10 +14,12 @@ type URLRepository struct {
 	db *pgxpool.Pool
 }
 
+// NewURLRepository creates a new URLRepository instance with the provided database connection pool
 func NewURLRepository(db *pgxpool.Pool) *URLRepository {
 	return &URLRepository{db: db}
 }
 
+// GetLastURLID retrieves the highest ID from the urls table for generating the next unique ID
 func (r *URLRepository) GetLastURLID() (int, error) {
 	var lastID int
 
@@ -33,6 +35,7 @@ func (r *URLRepository) GetLastURLID() (int, error) {
 	return lastID, nil
 }
 
+// CreateURL inserts a new URL mapping into the database without expiration
 func (r *URLRepository) CreateURL(shortURL, longURL string) (*models.URL, error) {
 	insertQuery := `INSERT INTO urls (short_url, long_url) VALUES ($1, $2) RETURNING id, created_at`
 
@@ -54,6 +57,7 @@ func (r *URLRepository) CreateURL(shortURL, longURL string) (*models.URL, error)
 	}, nil
 }
 
+// GenerateNextID generates the next unique ID using a multiplication strategy to avoid collisions
 func (r *URLRepository) GenerateNextID(lastID int) int {
 	if lastID > 1000 {
 		return (lastID + 1) * 1111
@@ -61,6 +65,7 @@ func (r *URLRepository) GenerateNextID(lastID int) int {
 	return (lastID + 1) * 11111
 }
 
+// URLExists checks if a long URL already exists in the database
 func (r *URLRepository) URLExists(longURL string) (bool, error) {
 	query := "SELECT EXISTS(SELECT 1 FROM urls WHERE long_url = $1)"
 	var exists bool
@@ -71,6 +76,7 @@ func (r *URLRepository) URLExists(longURL string) (bool, error) {
 	return exists, nil
 }
 
+// GetAllLongURLs retrieves all long URLs from the database for bloom filter initialization
 func (r *URLRepository) GetAllLongURLs() ([]string, error) {
 	query := "SELECT long_url FROM urls"
 	rows, err := r.db.Query(context.Background(), query)
@@ -95,6 +101,7 @@ func (r *URLRepository) GetAllLongURLs() ([]string, error) {
 	return urls, nil
 }
 
+// GetByShortURL retrieves a URL record by its short URL and validates it's not expired
 func (r *URLRepository) GetByShortURL(shortURL string) (*models.URL, error) {
 	query := `SELECT id, short_url, long_url, created_at, expires_at, clicks, user_id, is_active 
 			  FROM urls WHERE short_url = $1 AND is_active = true`
@@ -131,6 +138,7 @@ func (r *URLRepository) GetByShortURL(shortURL string) (*models.URL, error) {
 	return &url, nil
 }
 
+// IncrementClicks increments the click counter for a specific short URL
 func (r *URLRepository) IncrementClicks(shortURL string) error {
 	query := "UPDATE urls SET clicks = clicks + 1 WHERE short_url = $1"
 	_, err := r.db.Exec(context.Background(), query, shortURL)
@@ -140,6 +148,7 @@ func (r *URLRepository) IncrementClicks(shortURL string) error {
 	return nil
 }
 
+// CreateURLWithTTL inserts a new URL mapping with optional time-to-live expiration
 func (r *URLRepository) CreateURLWithTTL(shortURL, longURL string, ttlSeconds *int) (*models.URL, error) {
 	var expiresAt *time.Time
 	if ttlSeconds != nil {
@@ -168,6 +177,7 @@ func (r *URLRepository) CreateURLWithTTL(shortURL, longURL string, ttlSeconds *i
 	}, nil
 }
 
+// DeleteExpiredURLs removes all expired URLs from the database and returns the count of deleted records
 func (r *URLRepository) DeleteExpiredURLs() (int, error) {
 	query := "DELETE FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()"
 	result, err := r.db.Exec(context.Background(), query)
@@ -179,6 +189,7 @@ func (r *URLRepository) DeleteExpiredURLs() (int, error) {
 	return int(rowsAffected), nil
 }
 
+// GetExpiredURLsCount returns the number of expired URLs in the database
 func (r *URLRepository) GetExpiredURLsCount() (int, error) {
 	query := "SELECT COUNT(*) FROM urls WHERE expires_at IS NOT NULL AND expires_at < NOW()"
 	var count int

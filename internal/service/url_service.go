@@ -14,6 +14,7 @@ type URLService struct {
 	bloomFilter *filter.BloomFilter
 }
 
+// NewURLService creates a new URLService instance with repository and bloom filter dependencies
 func NewURLService(repo *storage.URLRepository, bloomFilter *filter.BloomFilter) *URLService {
 	return &URLService{
 		repo:        repo,
@@ -21,10 +22,12 @@ func NewURLService(repo *storage.URLRepository, bloomFilter *filter.BloomFilter)
 	}
 }
 
+// ShortenURL creates a shortened URL for the given long URL without TTL
 func (s *URLService) ShortenURL(longURL string) (*models.URL, error) {
 	return s.ShortenURLWithTTL(longURL, nil)
 }
 
+// ShortenURLWithTTL creates a shortened URL with optional time-to-live expiration
 func (s *URLService) ShortenURLWithTTL(longURL string, ttlSeconds *int) (*models.URL, error) {
 	if s.bloomFilter.Test(longURL) {
 		exists, err := s.repo.URLExists(longURL)
@@ -54,6 +57,7 @@ func (s *URLService) ShortenURLWithTTL(longURL string, ttlSeconds *int) (*models
 	return url, nil
 }
 
+// RedirectURL retrieves the original long URL for a given short URL and increments click count
 func (s *URLService) RedirectURL(shortURL string) (string, error) {
 	url, err := s.repo.GetByShortURL(shortURL)
 	if err != nil {
@@ -67,6 +71,7 @@ func (s *URLService) RedirectURL(shortURL string) (string, error) {
 	return url.LongURL, nil
 }
 
+// CleanupExpiredURLs removes expired URLs from the database and returns the count of deleted records
 func (s *URLService) CleanupExpiredURLs() (int, error) {
 	count, err := s.repo.DeleteExpiredURLs()
 	if err != nil {

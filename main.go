@@ -13,6 +13,7 @@ import (
 	"github.com/4Noyis/url-shortener/internal/storage"
 )
 
+// main initializes the URL shortener service with database connection, bloom filter, and HTTP server
 func main() {
 	if err := config.LoadEnv(); err != nil {
 		log.Fatal("Error loading .env file:", err)

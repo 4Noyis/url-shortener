@@ -12,12 +12,14 @@ type URLHandler struct {
 	urlService *service.URLService
 }
 
+// NewURLHandler creates a new URLHandler instance with the provided URL service
 func NewURLHandler(urlService *service.URLService) *URLHandler {
 	return &URLHandler{
 		urlService: urlService,
 	}
 }
 
+// ShortenURL handles POST requests to shorten a long URL and returns the shortened URL
 func (h *URLHandler) ShortenURL(c *gin.Context) {
 	var req dto.ShortenURLRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -55,6 +57,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+// RedirectURL handles GET requests to redirect from a short URL to the original long URL
 func (h *URLHandler) RedirectURL(c *gin.Context) {
 	shortURL := c.Param("shortURL")
 	if shortURL == "" {
